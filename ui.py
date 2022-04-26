@@ -22,14 +22,15 @@ from bpy.types import Panel
 #
 
 class MyPanel(Panel):
-    bl_label = 'My Awesome Panel'
+    bl_label = 'City Builder'
     bl_space_type = 'PROPERTIES'
     bl_region_type= 'WINDOW'
     bl_context = 'render'
 
     def draw(self, context):
         row = self.layout.row()
-        row.prop(context.scene, 'my_property')
+        row.prop(context.scene, 'rows')
+       
 
 def register():
     bpy.utils.register_class(MyPanel)
