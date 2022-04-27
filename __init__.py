@@ -16,7 +16,25 @@ from bpy.types import Operator
 from bpy.props import FloatVectorProperty
 from bpy_extras.object_utils import AddObjectHelper
 import random
+from math import radians
 
+
+# todo add city config properties to the panel
+class CityPanel(bpy.types.Panel):
+    bl_label = "Config City"
+    bl_idname = "InstaCity"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "CityMaker"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.operator("mesh.add_city")
+        row = layout.row()
+        row.label(text="Configure the City", icon = "CUBE")
+        
+        
 
 space = 3
 block_space = .5
@@ -56,10 +74,12 @@ def get_random_color():
 class OBJECT_OT_add_city(Operator, AddObjectHelper):
     """Create a new Generative Coty"""
     bl_idname = "mesh.add_city"
-    bl_label = "Add Mesh City"
+    bl_label = "Mesh City"
     bl_options = {'REGISTER', 'UNDO'}
     city_blocks: bpy.props.IntProperty(name="CityBlocks", default=3, min=1, max=10)
     building_max_h: bpy.props.IntProperty(name="MaxHeight", default=4, min=1, max=7)
+    use_colors: bpy.props.BoolProperty(name="UseColors", default=True)    
+    use_trees: bpy.props.BoolProperty(name="UseTress", default=False)
 
     scale: FloatVectorProperty(
         name="scale",
@@ -69,9 +89,12 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
     )
 
     def execute(self, context):
-
         deleteAllObjects()
-        # add ground
+
+        # ? bpy.ops.import_scene.fbx(filepath="/Users/seeward/Documents/blender/models/fbx/tree.fbx", global_scale=0.05)
+        # ? tree = bpy.context.object
+
+        #  ? add ground
         bpy.ops.mesh.primitive_plane_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         bpy.ops.transform.resize(
             value=(100, 100, 1), 
@@ -86,10 +109,11 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
             use_proportional_projected=False, 
             release_confirm=True)
 
+
         for boxX in range(self.city_blocks):
             for boxY in range(self.city_blocks):
 
-                # add sidewalks
+                # ? add sidewalks
                 bpy.ops.mesh.primitive_cube_add(
                     size=2.5, 
                     enter_editmode=False, 
@@ -111,17 +135,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
 
                             if(h == 0):
                                 h = .05
-                                # color = rgb(0x5EBA7D)
-                            # if(h == 1):
-                            #     color = rgb(0x717171)
-                            # if(h == 2):
-                            #     color = rgb(0x8C8C8C)
-                            # if(h == 3):
-                            #     color = rgb(0xA9A9A9)
-                            # if(h == 4):
-                            #     color = rgb(0x2b2b2b)
-                            # if(h >= 5):
-                            #     color = rgb(0x4b4b4b)
+                           
 
                             bpy.ops.mesh.primitive_cube_add(
                                 size=1, 
@@ -129,7 +143,12 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                                 align='WORLD', 
                                 location=(curX + blockX, curY + blockY , h /2), 
                                 scale=(1, 1, h ))
-                            color = get_random_color()
+
+                            if(self.use_colors):
+                                color = get_random_color()
+                            else:
+                                color = rgb(0x717171)
+
                             obj = bpy.context.object
                             obj.color = color
                             mat = bpy.data.materials.new("Blue")
@@ -151,17 +170,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             
                             if(h == 0):
                                 h = .05
-                                # color = rgb(0x5EBA7D)
-                            # if(h == 1):
-                            #     color = rgb(0x717171)
-                            # if(h == 2):
-                            #     color = rgb(0x8C8C8C)
-                            # if(h == 3):
-                            #     color = rgb(0xA9A9A9)
-                            # if(h == 4):
-                            #     color = rgb(0x2b2b2b)
-                            # if(h >= 5):
-                            #     color = rgb(0x4b4b4b)
+                           
                             
                                 
                             bpy.ops.mesh.primitive_cube_add(
@@ -172,7 +181,10 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                                 scale=(1, 1, h ))
                                 
                             obj = bpy.context.object
-                            color = get_random_color()
+                            if(self.use_colors):
+                                color = get_random_color()
+                            else:
+                                color = rgb(0x717171)
                             obj.color = color
 
                             mat = bpy.data.materials.new("Blue3")
@@ -188,6 +200,18 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             mat.diffuse_color = color           
                             # Assign the material to the object
                             obj.data.materials.append(mat)
+
+                            if(self.use_trees):
+                                bpy.ops.mesh.primitive_cube_add(
+                                size=1, 
+                                enter_editmode=False, 
+                                align='WORLD', 
+                                location=(curX + block_space + .25, curY  + block_space + .25 , 0), 
+                                scale=(1, 1, 1 ))
+                                
+                                obj = bpy.context.object
+                                subsurf = obj.modifiers.new("myMod", "SUBSURF")
+                                subsurf.modifiers["myMod"].levels = 3
                         
                 
                 if(block_type == 3):
@@ -198,18 +222,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
 
                             if(h == 0):
                                 h = .05
-                                # color = rgb(0x5EBA7D)
-                            # if(h == 1):
-                            #     color = rgb(0x717171)
-                            # if(h == 2):
-                            #     color = rgb(0x8C8C8C)
-                            # if(h == 3):
-                            #     color = rgb(0xA9A9A9)
-                            # if(h == 4):
-                            #     color = rgb(0x2b2b2b)
-                            # if(h >= 5):
-                            #     color = rgb(0x4b4b4b)
-
+                           
                             bpy.ops.mesh.primitive_cube_add(
                                 size=1, 
                                 enter_editmode=False, 
@@ -218,7 +231,10 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                                 scale=(1, 1, h ))
 
                             obj = bpy.context.object
-                            color = get_random_color()
+                            if(self.use_colors):
+                                color = get_random_color()
+                            else:
+                                color = rgb(0x717171)
                             obj.color = color
                             mat = bpy.data.materials.new("Blue2")
 
@@ -234,7 +250,6 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
 
                             # Assign the material to the object
                             obj.data.materials.append(mat)
-        
 
         return {'FINISHED'}
 
@@ -245,7 +260,7 @@ def add_object_button(self, context):
     self.layout.operator(
         OBJECT_OT_add_city.bl_idname,
         text="Add City",
-        icon='PLUGIN')
+        icon='CUBE')
 
 
 # This allows you to right click on a button and link to documentation
@@ -259,12 +274,14 @@ def add_object_manual_map():
 
 def register():
     bpy.utils.register_class(OBJECT_OT_add_city)
+    bpy.utils.register_class(CityPanel)
     bpy.utils.register_manual_map(add_object_manual_map)
     bpy.types.VIEW3D_MT_add.append(add_object_button)
 
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_city)
+    bpy.utils.unregister_class(CityPanel)
     bpy.utils.unregister_manual_map(add_object_manual_map)
     bpy.types.VIEW3D_MT_add.remove(add_object_button)
 
