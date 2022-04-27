@@ -211,7 +211,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                                 
                                 obj = bpy.context.object
                                 subsurf = obj.modifiers.new("myMod", "SUBSURF")
-                                subsurf.modifiers["myMod"].levels = 3
+                                subsurf.levels = 3
                         
                 
                 if(block_type == 3):
