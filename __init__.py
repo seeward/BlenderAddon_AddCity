@@ -188,7 +188,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             
                             if(h == .05):
                                 color = rgb(0x199313)
-                                
+
                             obj.color = color
 
                             mat = bpy.data.materials.new("Blue3")
@@ -208,53 +208,53 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             if(self.use_trees and h == .05):
                                 for x in range(2):
                                     for y in range(2):
-                                        if(ran(1,2) == 2):
-                                            bpy.ops.mesh.primitive_cube_add(
-                                            size=.5, 
+                                        
+                                        bpy.ops.mesh.primitive_cube_add(
+                                        size=.5, 
+                                        enter_editmode=False, 
+                                        align='WORLD', 
+                                        location=(((curX + block_space) - x) + .5, ((curY  + block_space) - y) + .5, .5), 
+                                        scale=(ranfloat(.5,1), ranfloat(.5,1), ranfloat(.5,1) ))
+                                        
+                                        obj = bpy.context.object
+                                        subsurf = obj.modifiers.new("myMod", "SUBSURF")
+                                        subsurf.levels = ran(1,3)
+                                        mat = bpy.data.materials.new("Green")
+
+                                        # Activate its nodes
+                                        mat.use_nodes = True
+
+                                        # Get the principled BSDF (created by default)
+                                        principled = mat.node_tree.nodes['Principled BSDF']
+
+                                        # Assign the color
+                                        principled.inputs['Base Color'].default_value = rgb(0x91C11D)
+                                        mat.diffuse_color = rgb(0x91C11D)           
+                                        # Assign the material to the object
+                                        obj.data.materials.append(mat)
+
+                                        bpy.ops.mesh.primitive_cylinder_add(
+                                            radius=.1, 
+                                            depth=2, 
                                             enter_editmode=False, 
                                             align='WORLD', 
-                                            location=(curX + block_space + .25 - x, curY  + block_space + .25 - y  , .5), 
-                                            scale=(ranfloat(.5,1), ranfloat(.5,1), ranfloat(.5,1) ))
-                                            
-                                            obj = bpy.context.object
-                                            subsurf = obj.modifiers.new("myMod", "SUBSURF")
-                                            subsurf.levels = 3
-                                            mat = bpy.data.materials.new("Green")
+                                            location=(((curX + block_space) - x) + .5, ((curY  + block_space) - y) + .5, .2), 
+                                            scale=(ranfloat(.1,.5),ranfloat(.1,.5), .2))
 
-                                            # Activate its nodes
-                                            mat.use_nodes = True
+                                        obj = bpy.context.object
+                                        mat = bpy.data.materials.new("Brown")
 
-                                            # Get the principled BSDF (created by default)
-                                            principled = mat.node_tree.nodes['Principled BSDF']
+                                        # Activate its nodes
+                                        mat.use_nodes = True
 
-                                            # Assign the color
-                                            principled.inputs['Base Color'].default_value = rgb(0x91C11D)
-                                            mat.diffuse_color = rgb(0x91C11D)           
-                                            # Assign the material to the object
-                                            obj.data.materials.append(mat)
+                                        # Get the principled BSDF (created by default)
+                                        principled = mat.node_tree.nodes['Principled BSDF']
 
-                                            bpy.ops.mesh.primitive_cylinder_add(
-                                                radius=.1, 
-                                                depth=2, 
-                                                enter_editmode=False, 
-                                                align='WORLD', 
-                                                location=(curX + block_space + .25 - x, curY  + block_space + .25 - y , .2), 
-                                                scale=(ranfloat(.1,.5),ranfloat(.1,.5), .2))
-
-                                            obj = bpy.context.object
-                                            mat = bpy.data.materials.new("Brown")
-
-                                            # Activate its nodes
-                                            mat.use_nodes = True
-
-                                            # Get the principled BSDF (created by default)
-                                            principled = mat.node_tree.nodes['Principled BSDF']
-
-                                            # Assign the color
-                                            principled.inputs['Base Color'].default_value = rgb(0x936413)
-                                            mat.diffuse_color = rgb(0x936413)           
-                                            # Assign the material to the object
-                                            obj.data.materials.append(mat)
+                                        # Assign the color
+                                        principled.inputs['Base Color'].default_value = rgb(0x936413)
+                                        mat.diffuse_color = rgb(0x936413)           
+                                        # Assign the material to the object
+                                        obj.data.materials.append(mat)
 
                         
                 
