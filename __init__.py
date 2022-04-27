@@ -204,11 +204,52 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             mat.diffuse_color = color           
                             # Assign the material to the object
                             obj.data.materials.append(mat)
+                            if(h == .05):
+
+                                bpy.ops.mesh.primitive_plane_add(
+                                    size=1, 
+                                    enter_editmode=False, 
+                                    align='WORLD', 
+                                    location=(curX + block_space, curY  + block_space , .1), 
+                                    scale=(1,2, 1))
+                                bpy.ops.transform.resize(
+                                    value=(.75, 2, 1), 
+                                    orient_type='GLOBAL', 
+                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                                    orient_matrix_type='GLOBAL', 
+                                    constraint_axis=(True, False, False), 
+                                    mirror=False, use_proportional_edit=False, 
+                                    proportional_edit_falloff='SMOOTH', 
+                                    proportional_size=1, 
+                                    use_proportional_connected=False, 
+                                    use_proportional_projected=False, 
+                                    release_confirm=True)
+                                bpy.ops.mesh.primitive_plane_add(
+                                    size=1, 
+                                    enter_editmode=False, 
+                                    align='WORLD', 
+                                    location=(curX + block_space, curY  + block_space , .1), 
+                                    scale=(2,1, 1))
+                                bpy.ops.transform.resize(
+                                    value=(2, .75, 1), 
+                                    orient_type='GLOBAL', 
+                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                                    orient_matrix_type='GLOBAL', 
+                                    constraint_axis=(True, False, False), 
+                                    mirror=False, use_proportional_edit=False, 
+                                    proportional_edit_falloff='SMOOTH', 
+                                    proportional_size=1, 
+                                    use_proportional_connected=False, 
+                                    use_proportional_projected=False, 
+                                    release_confirm=True)
+
+                            
 
                             if(self.use_trees and h == .05):
                                 for x in range(2):
                                     for y in range(2):
                                         
+
                                         bpy.ops.mesh.primitive_cube_add(
                                         size=.5, 
                                         enter_editmode=False, 
