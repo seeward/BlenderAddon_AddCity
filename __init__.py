@@ -79,7 +79,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
     city_blocks: bpy.props.IntProperty(name="CityBlocks", default=3, min=1, max=10)
     building_max_h: bpy.props.IntProperty(name="MaxHeight", default=4, min=1, max=7)
     use_colors: bpy.props.BoolProperty(name="UseColors", default=True)    
-    use_trees: bpy.props.BoolProperty(name="UseTress", default=False)
+    use_trees: bpy.props.BoolProperty(name="UseTress", default=True)
 
     scale: FloatVectorProperty(
         name="scale",
@@ -185,6 +185,10 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                                 color = get_random_color()
                             else:
                                 color = rgb(0x717171)
+                            
+                            if(h == .05):
+                                color = rgb(0x199313)
+                                
                             obj.color = color
 
                             mat = bpy.data.materials.new("Blue3")
@@ -201,17 +205,57 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             # Assign the material to the object
                             obj.data.materials.append(mat)
 
-                            if(self.use_trees):
-                                bpy.ops.mesh.primitive_cube_add(
-                                size=1, 
-                                enter_editmode=False, 
-                                align='WORLD', 
-                                location=(curX + block_space + .25, curY  + block_space + .25 , 0), 
-                                scale=(1, 1, 1 ))
-                                
-                                obj = bpy.context.object
-                                subsurf = obj.modifiers.new("myMod", "SUBSURF")
-                                subsurf.levels = 3
+                            if(self.use_trees and h == .05):
+                                for x in range(2):
+                                    for y in range(2):
+                                        if(ran(1,2) == 2):
+                                            bpy.ops.mesh.primitive_cube_add(
+                                            size=.5, 
+                                            enter_editmode=False, 
+                                            align='WORLD', 
+                                            location=(curX + block_space + .25 - x, curY  + block_space + .25 - y  , .5), 
+                                            scale=(ranfloat(.5,1), ranfloat(.5,1), ranfloat(.5,1) ))
+                                            
+                                            obj = bpy.context.object
+                                            subsurf = obj.modifiers.new("myMod", "SUBSURF")
+                                            subsurf.levels = 3
+                                            mat = bpy.data.materials.new("Green")
+
+                                            # Activate its nodes
+                                            mat.use_nodes = True
+
+                                            # Get the principled BSDF (created by default)
+                                            principled = mat.node_tree.nodes['Principled BSDF']
+
+                                            # Assign the color
+                                            principled.inputs['Base Color'].default_value = rgb(0x91C11D)
+                                            mat.diffuse_color = rgb(0x91C11D)           
+                                            # Assign the material to the object
+                                            obj.data.materials.append(mat)
+
+                                            bpy.ops.mesh.primitive_cylinder_add(
+                                                radius=.1, 
+                                                depth=2, 
+                                                enter_editmode=False, 
+                                                align='WORLD', 
+                                                location=(curX + block_space + .25 - x, curY  + block_space + .25 - y , .2), 
+                                                scale=(ranfloat(.1,.5),ranfloat(.1,.5), .2))
+
+                                            obj = bpy.context.object
+                                            mat = bpy.data.materials.new("Brown")
+
+                                            # Activate its nodes
+                                            mat.use_nodes = True
+
+                                            # Get the principled BSDF (created by default)
+                                            principled = mat.node_tree.nodes['Principled BSDF']
+
+                                            # Assign the color
+                                            principled.inputs['Base Color'].default_value = rgb(0x936413)
+                                            mat.diffuse_color = rgb(0x936413)           
+                                            # Assign the material to the object
+                                            obj.data.materials.append(mat)
+
                         
                 
                 if(block_type == 3):
