@@ -11,6 +11,7 @@ bl_info = {
 }
 
 
+from sys import _xoptions
 import bpy
 from bpy.types import Operator
 from bpy.props import FloatVectorProperty
@@ -66,11 +67,12 @@ def deleteAllObjects():
         # Delete the meshes
         bpy.data.objects.remove( mesh )
 
-def get_random_color():
-    ''' generate rgb using a list comprehension '''
-    r, g, b = [ran(0,5) for i in range(3)]
-    return r, g, b, 1
-
+def get_random_color(mode = False):
+    cols = [0x636d73, 0x99a09d, 0x889395, 0x33393a, 0xafb9b8, 0x3c4044, 0x7f8788, 0xcdd3d3, 0xaab5a9,0x3b4e45,0x4d5859, 0x495749]
+    if(not mode):
+        return rgb(cols[ran(0,11)])
+    else:
+        return cols[ran(0,11)]
 class OBJECT_OT_add_city(Operator, AddObjectHelper):
     """Create a new Generative Coty"""
     bl_idname = "mesh.add_city"
@@ -80,7 +82,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
     building_max_h: bpy.props.IntProperty(name="MaxHeight", default=4, min=1, max=7)
     use_colors: bpy.props.BoolProperty(name="UseColors", default=True)    
     use_trees: bpy.props.BoolProperty(name="UseTress", default=True)
-
+    
     scale: FloatVectorProperty(
         name="scale",
         default=(1.0, 1.0, 1.0),
@@ -109,17 +111,16 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
             use_proportional_projected=False, 
             release_confirm=True)
 
+        obj = bpy.context.object
+        self.add_mat(obj,0x5F6975, "ground_0")
 
         for boxX in range(self.city_blocks):
             for boxY in range(self.city_blocks):
 
                 # ? add sidewalks
-                bpy.ops.mesh.primitive_cube_add(
-                    size=2.5, 
-                    enter_editmode=False, 
-                    align='WORLD', 
-                    location=(boxX * space , boxY * space , 0), 
-                    scale=(1, 1, .01))
+                
+                obj = self.make_building((boxX * space , boxY * space , 0),2.5,.01)
+                self.add_mat(obj,0xc1c1c1, "side_walk")
                 # store our locations for each loop
                 curX = boxX * space - .5
                 curY = boxY * space - .5
@@ -127,42 +128,21 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                 block_type = ran(1,3)
                 
                 # block split into 1/4s 
-                if(block_type == 1):
+                if(block_type == 1 or block_type == 3):
                     for blockX in range(2):
                         for blockY in range(2):
-                            
                             h = ran(0,self.building_max_h) 
-
                             if(h == 0):
                                 h = .05
-                           
-
-                            bpy.ops.mesh.primitive_cube_add(
-                                size=1, 
-                                enter_editmode=False, 
-                                align='WORLD', 
-                                location=(curX + blockX, curY + blockY , h /2), 
-                                scale=(1, 1, h ))
-
                             if(self.use_colors):
-                                color = get_random_color()
+                                color = get_random_color(True)
                             else:
-                                color = rgb(0x717171)
+                                color = 0x717171
 
-                            obj = bpy.context.object
-                            obj.color = color
-                            mat = bpy.data.materials.new("Blue")
-                            # Activate its nodes
-                            mat.use_nodes = True
-                            mat.diffuse_color = color
-                            # Get the principled BSDF (created by default)
-                            principled = mat.node_tree.nodes['Principled BSDF']
-                            # Assign the color
-                            principled.inputs['Base Color'].default_value = color
-                            # Assign the material to the object
-                            obj.data.materials.append(mat)
+                            obj = self.make_building((curX + blockX, curY + blockY , h /2),1, h)
+                            self.add_mat(obj,color, "blue")
                 
-
+                # single large block or garden
                 if(block_type == 2):
                     for blockX in range(1):
                         for blockY in range(1):
@@ -170,173 +150,159 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             
                             if(h == 0):
                                 h = .05
-                           
-                            
                                 
-                            bpy.ops.mesh.primitive_cube_add(
-                                size=2, 
-                                enter_editmode=False, 
-                                align='WORLD', 
-                                location=(curX + block_space, curY  + block_space , h/1.0015), 
-                                scale=(1, 1, h ))
-                                
-                            obj = bpy.context.object
+                            obj = self.make_building((curX + block_space, curY  + block_space , h/1.0015),2, h)
                             if(self.use_colors):
-                                color = get_random_color()
+                                color = get_random_color(True)
                             else:
-                                color = rgb(0x717171)
+                                color = 0x717171
                             
                             if(h == .05):
-                                color = rgb(0x199313)
-
-                            obj.color = color
-
-                            mat = bpy.data.materials.new("Blue3")
-
-                            # Activate its nodes
-                            mat.use_nodes = True
-
-                            # Get the principled BSDF (created by default)
-                            principled = mat.node_tree.nodes['Principled BSDF']
-
-                            # Assign the color
-                            principled.inputs['Base Color'].default_value = color
-                            mat.diffuse_color = color           
-                            # Assign the material to the object
-                            obj.data.materials.append(mat)
-                            if(h == .05):
-
-                                bpy.ops.mesh.primitive_plane_add(
-                                    size=1, 
-                                    enter_editmode=False, 
-                                    align='WORLD', 
-                                    location=(curX + block_space, curY  + block_space , .1), 
-                                    scale=(1,2, 1))
-                                bpy.ops.transform.resize(
-                                    value=(.75, 2, 1), 
-                                    orient_type='GLOBAL', 
-                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                                    orient_matrix_type='GLOBAL', 
-                                    constraint_axis=(True, False, False), 
-                                    mirror=False, use_proportional_edit=False, 
-                                    proportional_edit_falloff='SMOOTH', 
-                                    proportional_size=1, 
-                                    use_proportional_connected=False, 
-                                    use_proportional_projected=False, 
-                                    release_confirm=True)
-                                bpy.ops.mesh.primitive_plane_add(
-                                    size=1, 
-                                    enter_editmode=False, 
-                                    align='WORLD', 
-                                    location=(curX + block_space, curY  + block_space , .1), 
-                                    scale=(2,1, 1))
-                                bpy.ops.transform.resize(
-                                    value=(2, .75, 1), 
-                                    orient_type='GLOBAL', 
-                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                                    orient_matrix_type='GLOBAL', 
-                                    constraint_axis=(True, False, False), 
-                                    mirror=False, use_proportional_edit=False, 
-                                    proportional_edit_falloff='SMOOTH', 
-                                    proportional_size=1, 
-                                    use_proportional_connected=False, 
-                                    use_proportional_projected=False, 
-                                    release_confirm=True)
-
+                                color = 0x199313
                             
+                            self.add_mat(obj, color, "building_1")
+
+                            if(h == .05):
+                                r = ran(1,3)
+                                if(r == 1):
+                                    r = get_random_color(True)
+                                    bpy.ops.mesh.primitive_plane_add(
+                                        size=1, 
+                                        enter_editmode=False, 
+                                        align='WORLD', 
+                                        location=(curX + block_space, curY  + block_space , .10115), 
+                                        scale=(1,2, 1))
+
+                                    bpy.ops.transform.resize(
+                                        value=(.5, 2, 1), 
+                                        orient_type='GLOBAL', 
+                                        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                                        orient_matrix_type='GLOBAL', 
+                                        constraint_axis=(True, False, False), 
+                                        mirror=False, use_proportional_edit=False, 
+                                        proportional_edit_falloff='SMOOTH', 
+                                        proportional_size=1, 
+                                        use_proportional_connected=False, 
+                                        use_proportional_projected=False, 
+                                        release_confirm=True)
+                                    obj = bpy.context.object
+                                    self.add_mat(obj, r, "concrete_0")
+                                    bpy.ops.mesh.primitive_plane_add(
+                                        size=1, 
+                                        enter_editmode=False, 
+                                        align='WORLD', 
+                                        location=(curX + block_space, curY  + block_space , .10115), 
+                                        scale=(2,1, 1))
+
+                                    bpy.ops.transform.resize(
+                                        value=(2, .5, 1), 
+                                        orient_type='GLOBAL', 
+                                        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
+                                        orient_matrix_type='GLOBAL', 
+                                        constraint_axis=(True, False, False), 
+                                        mirror=False, use_proportional_edit=False, 
+                                        proportional_edit_falloff='SMOOTH', 
+                                        proportional_size=1, 
+                                        use_proportional_connected=False, 
+                                        use_proportional_projected=False, 
+                                        release_confirm=True)
+                                    obj = bpy.context.object
+                                    self.add_mat(obj, r, "concrete_1")
+                                if(r == 2):
+                                    bpy.ops.mesh.primitive_plane_add(
+                                        size=1, 
+                                        enter_editmode=False, 
+                                        align='WORLD', 
+                                        location=(curX + block_space, curY  + block_space, .10115), 
+                                        scale=(1,1, 1))
+                                    obj = bpy.context.object
+                                    self.add_mat(obj, get_random_color(True), "concrete_2")
+                                if(r == 3):
+
+
+                                    bpy.ops.mesh.primitive_uv_sphere_add(
+                                        radius=1, 
+                                        enter_editmode=False, 
+                                        align='WORLD', 
+                                        location=(curX + block_space, curY  + block_space, .10115), 
+                                        scale=(0, 1, 1))
+                                    obj = bpy.context.object
+                                    obj.rotation_euler = (radians(90), radians(90), 0)
+                                    self.add_mat(obj, get_random_color(True), "concrete_3")
+
+                                    
 
                             if(self.use_trees and h == .05):
                                 for x in range(2):
+                                   
+
                                     for y in range(2):
                                         
 
-                                        bpy.ops.mesh.primitive_cube_add(
-                                        size=.5, 
-                                        enter_editmode=False, 
-                                        align='WORLD', 
-                                        location=(((curX + block_space) - x) + .5, ((curY  + block_space) - y) + .5, .5), 
-                                        scale=(ranfloat(.5,1), ranfloat(.5,1), ranfloat(.5,1) ))
+                                        x2 = ((curX + block_space) - x) + .5
+                                        y = ((curY  + block_space) - y) + .5
+
+                                        self.make_tree(x2,y)
                                         
-                                        obj = bpy.context.object
-                                        subsurf = obj.modifiers.new("myMod", "SUBSURF")
-                                        subsurf.levels = ran(1,3)
-                                        mat = bpy.data.materials.new("Green")
-
-                                        # Activate its nodes
-                                        mat.use_nodes = True
-
-                                        # Get the principled BSDF (created by default)
-                                        principled = mat.node_tree.nodes['Principled BSDF']
-
-                                        # Assign the color
-                                        principled.inputs['Base Color'].default_value = rgb(0x91C11D)
-                                        mat.diffuse_color = rgb(0x91C11D)           
-                                        # Assign the material to the object
-                                        obj.data.materials.append(mat)
-
-                                        bpy.ops.mesh.primitive_cylinder_add(
-                                            radius=.1, 
-                                            depth=2, 
-                                            enter_editmode=False, 
-                                            align='WORLD', 
-                                            location=(((curX + block_space) - x) + .5, ((curY  + block_space) - y) + .5, .2), 
-                                            scale=(ranfloat(.1,.5),ranfloat(.1,.5), .2))
-
-                                        obj = bpy.context.object
-                                        mat = bpy.data.materials.new("Brown")
-
-                                        # Activate its nodes
-                                        mat.use_nodes = True
-
-                                        # Get the principled BSDF (created by default)
-                                        principled = mat.node_tree.nodes['Principled BSDF']
-
-                                        # Assign the color
-                                        principled.inputs['Base Color'].default_value = rgb(0x936413)
-                                        mat.diffuse_color = rgb(0x936413)           
-                                        # Assign the material to the object
-                                        obj.data.materials.append(mat)
+                                      
 
                         
-                
-                if(block_type == 3):
-                    for blockX in range(2):
-                        for blockY in range(2):
-                            
-                            h = ran(0,self.building_max_h) 
-
-                            if(h == 0):
-                                h = .05
-                           
-                            bpy.ops.mesh.primitive_cube_add(
-                                size=1, 
-                                enter_editmode=False, 
-                                align='WORLD', 
-                                location=(curX + blockX, curY + blockY , h/2), 
-                                scale=(1, 1, h ))
-
-                            obj = bpy.context.object
-                            if(self.use_colors):
-                                color = get_random_color()
-                            else:
-                                color = rgb(0x717171)
-                            obj.color = color
-                            mat = bpy.data.materials.new("Blue2")
-
-                            # Activate its nodes
-                            mat.use_nodes = True
-
-                            # Get the principled BSDF (created by default)
-                            principled = mat.node_tree.nodes['Principled BSDF']
-
-                            # Assign the color
-                            principled.inputs['Base Color'].default_value = color
-                            mat.diffuse_color = color
-
-                            # Assign the material to the object
-                            obj.data.materials.append(mat)
-
         return {'FINISHED'}
+
+    def make_building(self, location, size, height):
+        bpy.ops.mesh.primitive_cube_add(
+            size=size, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=location, 
+            scale=(1, 1, height ))
+        return bpy.context.object
+
+
+    def make_tree(self,x2,y):
+       
+        bpy.ops.mesh.primitive_cube_add(
+            size=.5, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=(x2,y,.5), 
+            scale=(ranfloat(.75,2.5), ranfloat(.75,2.5), ranfloat(.5,1.5))
+        )
+        obj = bpy.context.object
+        # add a sub surface modifier
+        subsurf = obj.modifiers.new("myMod", "SUBSURF")
+        # randomize the surface
+        subsurf.levels = ran(1,5)
+        self.add_mat(obj, 0x91C11D, "top_of_tree")
+        # make the trunk of the tree
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=.1, 
+            depth=2, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=(x2, y, .2), 
+            scale=((ranfloat(.1,.5),ranfloat(.1,.5), .2)))
+
+        obj = bpy.context.object
+        self.add_mat(obj, 0x936413, "trunk_of_tree")
+        bpy.ops.mesh.primitive_uv_sphere_add(
+            radius=.15, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=(x2, y, .10115), 
+            scale=(0, 1, 1))
+        obj = bpy.context.object
+        self.add_mat(obj, 0x000000, "base_of_tree")
+        obj.rotation_euler = (radians(90), radians(90), 0)
+
+    def add_mat(self,obj, color, name):
+        mat = bpy.data.materials.new(name)
+        mat.use_nodes = True
+        principled = mat.node_tree.nodes['Principled BSDF']
+        principled.inputs['Base Color'].default_value = rgb(color)
+        mat.diffuse_color = rgb(color)           # brown
+        obj.data.materials.append(mat)
+
 
 
 # Registration
