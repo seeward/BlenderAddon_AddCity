@@ -11,7 +11,10 @@ bl_info = {
 }
 
 
+from dataclasses import make_dataclass
+from platform import win32_edition
 from sys import _xoptions
+from webbrowser import get
 import bpy
 from bpy.types import Operator
 from bpy.props import FloatVectorProperty
@@ -65,7 +68,8 @@ def deleteAllObjects():
 
     for mesh in bpy.context.selected_objects:
         # Delete the meshes
-        bpy.data.objects.remove( mesh )
+        if(mesh.name != 'Camera'):
+            bpy.data.objects.remove( mesh )
 
 def get_random_color(mode = False):
     cols = [0x636d73, 0x99a09d, 0x889395, 0x33393a, 0xafb9b8, 0x3c4044, 0x7f8788, 0xcdd3d3, 0xaab5a9,0x3b4e45,0x4d5859, 0x495749]
@@ -82,6 +86,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
     building_max_h: bpy.props.IntProperty(name="MaxHeight", default=4, min=1, max=7)
     use_colors: bpy.props.BoolProperty(name="UseColors", default=True)    
     use_trees: bpy.props.BoolProperty(name="UseTress", default=True)
+    use_wireframes: bpy.props.BoolProperty(name="UseWireFrames", default=False)
     
     scale: FloatVectorProperty(
         name="scale",
@@ -91,6 +96,7 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
     )
 
     def execute(self, context):
+
         deleteAllObjects()
 
         # ? bpy.ops.import_scene.fbx(filepath="/Users/seeward/Documents/blender/models/fbx/tree.fbx", global_scale=0.05)
@@ -112,15 +118,29 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
             release_confirm=True)
 
         obj = bpy.context.object
-        self.add_mat(obj,0x5F6975, "ground_0")
+        self.create_and_add_mat(obj,0x5F6975, "ground_0")
 
         for boxX in range(self.city_blocks):
             for boxY in range(self.city_blocks):
 
                 # ? add sidewalks
                 
-                obj = self.make_building((boxX * space , boxY * space , 0),2.5,.01)
-                self.add_mat(obj,0xc1c1c1, "side_walk")
+                self.make_building((boxX * space , boxY * space , 0),2.5,.01, 0)
+                
+
+                self.make_street_light((boxX * space + 1.2 , boxY * space + 1.2, .25))
+                
+
+                self.make_street_light((boxX * space - 1.2, boxY * space - 1.2, .25))
+                
+
+                self.make_street_light((boxX * space - 1.2, boxY * space + 1.2, .25))
+                
+
+                self.make_street_light((boxX * space + 1.2, boxY * space - 1.2, .25))
+                
+
+
                 # store our locations for each loop
                 curX = boxX * space - .5
                 curY = boxY * space - .5
@@ -139,8 +159,8 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             else:
                                 color = 0x717171
 
-                            obj = self.make_building((curX + blockX, curY + blockY , h /2),1, h)
-                            self.add_mat(obj,color, "blue")
+                            self.make_building((curX + blockX, curY + blockY , h /2),1, h, color)
+                            
                 
                 # single large block or garden
                 if(block_type == 2):
@@ -151,7 +171,6 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             if(h == 0):
                                 h = .05
                                 
-                            obj = self.make_building((curX + block_space, curY  + block_space , h/1.0015),2, h)
                             if(self.use_colors):
                                 color = get_random_color(True)
                             else:
@@ -160,120 +179,256 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
                             if(h == .05):
                                 color = 0x199313
                             
-                            self.add_mat(obj, color, "building_1")
-
-                            if(h == .05):
-                                r = ran(1,3)
-                                if(r == 1):
-                                    r = get_random_color(True)
-                                    bpy.ops.mesh.primitive_plane_add(
-                                        size=1, 
-                                        enter_editmode=False, 
-                                        align='WORLD', 
-                                        location=(curX + block_space, curY  + block_space , .10115), 
-                                        scale=(1,2, 1))
-
-                                    bpy.ops.transform.resize(
-                                        value=(.5, 2, 1), 
-                                        orient_type='GLOBAL', 
-                                        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                                        orient_matrix_type='GLOBAL', 
-                                        constraint_axis=(True, False, False), 
-                                        mirror=False, use_proportional_edit=False, 
-                                        proportional_edit_falloff='SMOOTH', 
-                                        proportional_size=1, 
-                                        use_proportional_connected=False, 
-                                        use_proportional_projected=False, 
-                                        release_confirm=True)
-                                    obj = bpy.context.object
-                                    self.add_mat(obj, r, "concrete_0")
-                                    bpy.ops.mesh.primitive_plane_add(
-                                        size=1, 
-                                        enter_editmode=False, 
-                                        align='WORLD', 
-                                        location=(curX + block_space, curY  + block_space , .10115), 
-                                        scale=(2,1, 1))
-
-                                    bpy.ops.transform.resize(
-                                        value=(2, .5, 1), 
-                                        orient_type='GLOBAL', 
-                                        orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), 
-                                        orient_matrix_type='GLOBAL', 
-                                        constraint_axis=(True, False, False), 
-                                        mirror=False, use_proportional_edit=False, 
-                                        proportional_edit_falloff='SMOOTH', 
-                                        proportional_size=1, 
-                                        use_proportional_connected=False, 
-                                        use_proportional_projected=False, 
-                                        release_confirm=True)
-                                    obj = bpy.context.object
-                                    self.add_mat(obj, r, "concrete_1")
-                                if(r == 2):
-                                    bpy.ops.mesh.primitive_plane_add(
-                                        size=1, 
-                                        enter_editmode=False, 
-                                        align='WORLD', 
-                                        location=(curX + block_space, curY  + block_space, .10115), 
-                                        scale=(1,1, 1))
-                                    obj = bpy.context.object
-                                    self.add_mat(obj, get_random_color(True), "concrete_2")
-                                if(r == 3):
-
-
-                                    bpy.ops.mesh.primitive_uv_sphere_add(
-                                        radius=1, 
-                                        enter_editmode=False, 
-                                        align='WORLD', 
-                                        location=(curX + block_space, curY  + block_space, .10115), 
-                                        scale=(0, 1, 1))
-                                    obj = bpy.context.object
-                                    obj.rotation_euler = (radians(90), radians(90), 0)
-                                    self.add_mat(obj, get_random_color(True), "concrete_3")
-
-                                    
-
+                            self.make_building((curX + block_space, curY  + block_space , h/1.0015),2, h, color, 1)
+                
                             if(self.use_trees and h == .05):
+                                bpy.ops.mesh.primitive_uv_sphere_add(
+                                    radius=1, 
+                                    enter_editmode=False, 
+                                    align='WORLD', 
+                                    location=(curX + block_space, curY  + block_space, .10115), 
+                                    scale=(0, 1, 1))
+                                obj = bpy.context.object
+                                obj.rotation_euler = (radians(90), radians(90), 0)
+                                self.create_and_add_mat(obj, get_random_color(True), "concrete_3")
                                 for x in range(2):
-                                   
-
                                     for y in range(2):
-                                        
 
-                                        x2 = ((curX + block_space) - x) + .5
-                                        y = ((curY  + block_space) - y) + .5
+                                        x2 = ((curX + block_space) - x/ranfloat(1.1,1.6)) + .5
+                                        y = ((curY  + block_space) - y/ranfloat(1.1,1.6)) + .5
 
                                         self.make_tree(x2,y)
                                         
-                                      
-
                         
         return {'FINISHED'}
 
-    def make_building(self, location, size, height):
+    def make_building(self, location, size, height, color, width = 2):
+
         bpy.ops.mesh.primitive_cube_add(
             size=size, 
             enter_editmode=False, 
             align='WORLD', 
             location=location, 
             scale=(1, 1, height ))
-        return bpy.context.object
-
-
-    def make_tree(self,x2,y):
        
+        if(height != .05 and width ==1):
+            bpy.ops.object.text_add(
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1], (location[2] * 2) - .75), 
+                scale=(.5, .5, 1))
+            txt_obj = bpy.context.object
+            txt_obj.data.body = 'RCB'
+            txt_obj.rotation_euler.x = radians(90)
+            txt_obj.location.y -= 1.005
+            txt_obj.location.x -= .9
+            txt_obj.scale.x = .5
+            txt_obj.scale.y = .5
+
+        if(color != 0):
+            self.create_and_add_mat(bpy.context.object, color, "building")
+            if(self.use_wireframes):    
+                bpy.ops.object.modifier_add(type='WIREFRAME')
+
+        if(ran(2,3) == 3):
+            win_size = ranfloat(.05, .1)
+            for i in range(4):
+                if(height > .05 and not self.use_wireframes and width != 1):
+                    bpy.ops.mesh.primitive_plane_add(
+                        size=1, 
+                        enter_editmode=False, 
+                        align='WORLD', 
+                        location=(location[0] + .51, (location[1] + i / 4) - .4 ,location[2] + .1 ), 
+                        scale=(1, 1 ,1))
+                    obj = bpy.context.object
+                    obj.scale.x = height - .50
+                    obj.scale.y = win_size
+                    obj.rotation_euler = (radians(90), radians(90), radians(90))
+                    self.create_and_add_mat(obj, 0x000000, "lampshade")
+
+                    bpy.ops.mesh.primitive_plane_add(
+                        size=1, 
+                        enter_editmode=False, 
+                        align='WORLD', 
+                        location=((location[0] + .51) - 1.02, (location[1] + i / 4) - .4 ,location[2]), 
+                        scale=(1, 1 ,1))
+                    obj = bpy.context.object
+                    obj.scale.x = height - .50
+                    obj.scale.y = win_size
+                    obj.rotation_euler = (radians(90), radians(90), radians(90))
+                    self.create_and_add_mat(obj, 0x000000, "lampshade")
+        
+        if(height > .05 and width != 1):
+            if(height == 1):
+                ledge_offset = .25
+            if(height == 2):
+                ledge_offset = .75
+            if(height == 3):
+                ledge_offset = 1.25
+            if(height == 4):
+                ledge_offset = 1.75
+            if(height == 5):
+                ledge_offset = 2.25
+            if(height == 6):
+                ledge_offset = 3.25
+            if(height == 7):
+                ledge_offset = 3.75
+
+            
+            scale_offset = .7
+
+            bpy.ops.mesh.primitive_plane_add(
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] ,location[2] - ledge_offset), 
+                scale=(1,1, 1))
+
+            ledge = bpy.context.object
+            ledge.scale.x = scale_offset
+            ledge.scale.y = scale_offset
+
+            self.create_and_add_mat(ledge, 0x000000,"ledgecolor")
+
+        if(width == 1 and height != .05):
+            
+            bpy.ops.mesh.primitive_cube_add(
+                size=2, 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] ,.45), 
+                scale=(1.1, 1.1, .15 ))
+
+            ledge = bpy.context.object
+            self.create_and_add_mat(ledge, get_random_color(True),"ledgecolor2")
+            
+
+            bpy.ops.mesh.primitive_cube_add(
+                size=.5, 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] + .85 ,.1), 
+                scale=(1, 1, .43 ))
+            door = bpy.context.object
+            self.create_and_add_mat(door, 0x000000,"doorcolor")
+
+            bpy.ops.mesh.primitive_cube_add(
+                size=.5, 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] - .85 ,.1), 
+                scale=(1, 1, .43 ))
+            door = bpy.context.object
+            self.create_and_add_mat(door, 0x000000,"doorcolor")
+
+            bpy.ops.mesh.primitive_cube_add(
+                size=ranfloat(.15,.7), 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] - ranfloat(-.25, .50) ,location[2] * 2), 
+                scale=(1, 1, .43 ))
+            door = bpy.context.object
+            self.create_and_add_mat(door, 0x000000,"doorcolor")
+
+        if(width != 1 and height != .05):
+
+            bpy.ops.mesh.primitive_cube_add(
+                size=.5, 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] + .35 ,.07), 
+                scale=(1, 1, .2 ))
+            door = bpy.context.object
+            self.create_and_add_mat(door, 0x000000,"doorcolor")
+
+
+            bpy.ops.mesh.primitive_cube_add(
+                size=ranfloat(.1,.3), 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=(location[0], location[1] - ranfloat(-.15, .20) ,location[2] * 2), 
+                scale=(1, 1, .43 ))
+            door = bpy.context.object
+            self.create_and_add_mat(door, get_random_color(True),"roofcolor")
+            
+        if(height >= 4 or width == 1 and height != .05):
+            tower_pos = (location[0], location[1] - ranfloat(-.15, .20) ,location[2] * 2)
+            bpy.ops.mesh.primitive_cylinder_add(
+                radius=.005, 
+                depth=2, 
+                enter_editmode=False, 
+                align='WORLD', 
+                location=tower_pos,
+                scale=(1,1, ranfloat(.25,1)))
+
+            radio_tower = bpy.context.object 
+            self.create_and_add_mat(radio_tower, 0x000000,"roofcolor")
+
+            bpy.ops.mesh.primitive_cube_add(
+                    size=.1, 
+                    enter_editmode=False, 
+                    align='WORLD', 
+                    location=tower_pos, 
+                    scale=(1, 1, .43 ))
+            tower_base = bpy.context.object
+            self.create_and_add_mat(tower_base, 0x000000,"roofcolor")
+
+        
+
+    def make_mat(self,name="DefaultName"):
+        mat = bpy.data.materials.new(name=name)
+        mat.use_nodes=True
+        return mat
+
+    def add_mat(self,mat, obj):
+        obj.data.materials.append(mat)
+                        
+    def change_node_value(self,mat,node_name,input_name, property, value):
+        if(mat and node_name, input_name and property):
+            mat.node_tree.nodes[node_name].inputs[input_name][property] = value
+            return mat
+            
+    def make_street_light(self, location):
+        
+        bpy.ops.mesh.primitive_cylinder_add(
+            radius=.015, 
+            depth=2, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=location, 
+            scale=(1,1,.25))
+        # create a light data block
+        light_data = bpy.data.lights.new(name="light_2.80", type='SPOT')
+        light_data.spot_size = radians(119)
+        light_data.diffuse_factor = .25
+
+        # create new object with our light datablock
+        light_object = bpy.data.objects.new(name="light_2.80", object_data=light_data)
+        light_object.location = (location[0], location[1] ,location[2] + .2)
+        bpy.context.collection.objects.link(light_object)
+        bpy.context.view_layer.objects.active = light_object
+        bpy.ops.mesh.primitive_plane_add(
+            size=.15, 
+            enter_editmode=False, 
+            align='WORLD', 
+            location=(location[0], location[1] ,location[2] + .2), 
+            scale=(.5, .5, 1))
+        self.create_and_add_mat(bpy.context.object, 0x000000, "lampshade")
+
+    def make_tree(self,x2,y, level=2):
+        body = ranfloat(1,2)
         bpy.ops.mesh.primitive_cube_add(
             size=.5, 
             enter_editmode=False, 
             align='WORLD', 
             location=(x2,y,.5), 
-            scale=(ranfloat(.75,2.5), ranfloat(.75,2.5), ranfloat(.5,1.5))
+            scale=(body, body, ranfloat(.5,1.5))
         )
         obj = bpy.context.object
         # add a sub surface modifier
         subsurf = obj.modifiers.new("myMod", "SUBSURF")
         # randomize the surface
-        subsurf.levels = ran(1,5)
-        self.add_mat(obj, 0x91C11D, "top_of_tree")
+        subsurf.levels = level
+        self.create_and_add_mat(obj, 0x91C11D, "top_of_tree")
         # make the trunk of the tree
         bpy.ops.mesh.primitive_cylinder_add(
             radius=.1, 
@@ -284,18 +439,18 @@ class OBJECT_OT_add_city(Operator, AddObjectHelper):
             scale=((ranfloat(.1,.5),ranfloat(.1,.5), .2)))
 
         obj = bpy.context.object
-        self.add_mat(obj, 0x936413, "trunk_of_tree")
+        self.create_and_add_mat(obj, 0x936413, "trunk_of_tree")
         bpy.ops.mesh.primitive_uv_sphere_add(
             radius=.15, 
             enter_editmode=False, 
             align='WORLD', 
-            location=(x2, y, .10115), 
+            location=(x2, y, .11115), 
             scale=(0, 1, 1))
         obj = bpy.context.object
-        self.add_mat(obj, 0x000000, "base_of_tree")
+        self.create_and_add_mat(obj, 0x000000, "base_of_tree")
         obj.rotation_euler = (radians(90), radians(90), 0)
 
-    def add_mat(self,obj, color, name):
+    def create_and_add_mat(self,obj, color, name):
         mat = bpy.data.materials.new(name)
         mat.use_nodes = True
         principled = mat.node_tree.nodes['Principled BSDF']
