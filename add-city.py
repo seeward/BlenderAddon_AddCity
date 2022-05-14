@@ -23,7 +23,7 @@ from math import radians
 # variables
 space = 3
 block_space = .5
-brand_names = ["/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/vodacom.jpeg","/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/santam.png", "/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/fnb.png"]
+brand_names = ["/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/images/vodacom.jpeg","/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/images/santam.png", "/Users/seeward/Documents/Development/AddCity_BlenderAddon/AddCity/images/fnb.png"]
 building_textures = ["concrete", "t_concrete_wall_002","white_plaster_02", "white_plaster_03"]
 ground_tx = 'concrete_floor_worn_001'
 sidewalk_tx = 'concrete'
