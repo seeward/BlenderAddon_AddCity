@@ -22,4 +22,5 @@ View looking down from the Z perspective:
 ![Add City Properties](/references/add-city-z.png)
 
 View looking across from the Y perspective:
+
 ![Add City Properties](/references/add-city-y.png)
